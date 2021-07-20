@@ -27,3 +27,7 @@
 
 #define LOOP(tIndex, tLow, tTop, tIncrement) \
 	for (int tIndex = tLow; tIndex < tTop; tIndex += tIncrement)
+
+
+#define PRINT_TERNARY(tCondition, tTrue, tFalse) \
+	std::cout << (tCondition? (tTrue): (tFalse)) << std::endl

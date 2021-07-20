@@ -1,11 +1,8 @@
-#include "PNGio.hpp"
+#include "TextureUtils.hpp"
 
 
 #include "Macros.hpp"
-#include "Manager.hpp"
 
-
-extern ecs::Manager gManager;
 
 
 namespace Renderer

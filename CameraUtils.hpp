@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Entity.hpp"
+#include "Components.hpp"
 #include "vec3.hpp"
 
 namespace Renderer
 {
 
-void lookAt(ecs::Entity tCameraId, const Math::vec3& tFocus);
+void lookAt(Camera& tCamera, const Math::vec3& tFocus);
 
 
 }

@@ -147,6 +147,7 @@ mat3 inv(const mat3& a){
 	
 	float dt = det(a);
 	
+	std::cout << dt << std::endl;
 	assert(dt != .0);
 	
 	vec3 r1 = vec3(a.row2.y * a.row3.z - a.row2.z * a.row3.y,

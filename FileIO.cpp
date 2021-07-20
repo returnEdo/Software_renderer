@@ -5,11 +5,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "extern/stb_image.h"
-#include "Manager.hpp"
 #include "Macros.hpp"
 
-
-extern ecs::Manager gManager;
 
 namespace Renderer
 {
@@ -25,9 +22,8 @@ namespace OBJ
 	const std::string C_TEXTURE	= "vt"; 
 	const std::string C_FACE	= "f";
 
-	bool read(const std::string& tAddress, ecs::Entity tMeshId)
+	bool read(const std::string& tAddress, Mesh& tMesh)
 	{
-		Mesh& lMesh = gManager.getComponent<Mesh>(tMeshId);
 
 		std::ifstream lFile(tAddress);
 
@@ -54,7 +50,7 @@ namespace OBJ
 				lStream >> lPosition.y;
 				lStream >> lPosition.z;
 
-				lMesh.mPositions.push_back(lPosition);
+				tMesh.mPositions.push_back(lPosition);
 			}
 			else if (lHeader == C_NORMAL)
 			{
@@ -64,16 +60,16 @@ namespace OBJ
 				lStream >> lNormal.y;
 				lStream >> lNormal.z;
 
-				lMesh.mNormals.push_back(lNormal);
+				tMesh.mNormals.push_back(lNormal);
 			}
 			else if (lHeader == C_TEXTURE)
 			{
-				Math::vec2 lTexture;
+				Math::vec2 tTexture;
 				
-				lStream >> lTexture.x;
-				lStream >> lTexture.y;
+				lStream >> tTexture.x;
+				lStream >> tTexture.y;
 
-				lMesh.mTextureUVs.push_back(lTexture);
+				tMesh.mTextureUVs.push_back(tTexture);
 			}
 			else if (lHeader == C_FACE)
 			{
@@ -93,7 +89,7 @@ namespace OBJ
 					lFace.mIndices[i].mNormal--;
 				}
 				
-				lMesh.mFaces.push_back(lFace);
+				tMesh.mFaces.push_back(lFace);
 			}
 		}
 		return true;
@@ -105,24 +101,22 @@ namespace OBJ
 namespace PNG
 {
 
-	bool read(const std::string& tAddress, ecs::Entity tTextureId)
+	bool read(const std::string& tAddress, Texture& tTexture)
 	{
-		Texture& lTexture = gManager.getComponent<Texture>(tTextureId);
-
 		int lChannelCount;
 
-		unsigned char* lData = stbi_load(tAddress.c_str(), &lTexture.mWidth, &lTexture.mHeight, &lChannelCount, 0);
+		unsigned char* lData = stbi_load(tAddress.c_str(), &tTexture.mWidth, &tTexture.mHeight, &lChannelCount, 0);
 
 		if (not lData)
 		{
 			return false;
 		}
 
-		for (int i = 0; i < lTexture.mHeight * lTexture.mWidth * lChannelCount; i += lChannelCount)
+		for (int i = 0; i < tTexture.mHeight * tTexture.mWidth * lChannelCount; i += lChannelCount)
 		{
-			lTexture.mAlpha.push_back(lChannelCount == 4? static_cast<float>(lData[i + 3]): 1.0f);
+			tTexture.mAlpha.push_back(lChannelCount == 4? static_cast<float>(lData[i + 3]): 1.0f);
 
-			lTexture.mColors.push_back({static_cast<float>(lData[i]), 
+			tTexture.mColors.push_back({static_cast<float>(lData[i]), 
 						    static_cast<float>(lData[i + 1]), 
 						    static_cast<float>(lData[i + 2])});
 		}
@@ -142,7 +136,7 @@ namespace PPM
 
 
 	bool write(const std::string& tAddress, const std::vector<Math::vec3>& tColors,
-		  unsigned int tWidth, unsigned int tHeight)
+		  int tWidth, int tHeight)
 	{
 		std::ofstream lFile(tAddress);
 		

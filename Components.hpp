@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 #include <cmath>
 
@@ -16,7 +17,6 @@ are stored here
 
 namespace Renderer
 {
-
 
 
 struct Transform
@@ -53,16 +53,16 @@ struct Buffers
 // Indices to vectors
 struct Indices
 {
-	unsigned int mPosition;
-	unsigned int mTextureUV;
-	unsigned int mNormal;
+	int mPosition;
+	int mTextureUV;
+	int mNormal;
 };
 
 
 // Data for single face
 struct Face
 {
-	Indices mIndices[3];
+	std::array<Indices, 3>  mIndices;
 };
 
 
@@ -74,13 +74,6 @@ struct Mesh
 	std::vector<Math::vec2>	mTextureUVs;
 
 	std::vector<Face>	mFaces;
-};
-
-struct VertexOutput
-{
-	Math::vec3 mPosition;
-	Math::vec3 mNormal;		// in world space
-	Math::vec2 mTextureUV;
 };
 
 struct Texture

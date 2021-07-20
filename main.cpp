@@ -1,135 +1,110 @@
-#include <iostream>
 #include <string>
-#include <sstream>
 #include <cmath>
-#include <vector>
+
+#include "vec2.hpp"
+#include "vec3.hpp"
+#include "mat3.hpp"
+#include "Rotor.hpp"
 
 #include "Macros.hpp"
-#include "Unique.hpp"
-
-#include "Components.hpp"
 #include "FileIO.hpp"
-
-#include "MathUtils.hpp"
-#include "CameraUtils.hpp"
-#include "EntityComponentSystem.hpp"
+#include "Components.hpp"
 #include "IProgram.hpp"
 #include "Program.hpp"
 
+#include "CameraUtils.hpp"
+#include "TextureUtils.hpp"
 
 
-using namespace Renderer; 
-using Memory::Unique;
 
-ecs::Manager gManager;
 
+using namespace Renderer;
 
 int main()
 {
-	gManager.init();
+	//--------SCENE
+	std::string lColorAddress = "./resources/textures/diablo.png";
+	std::string lNormalAddress = "./resources/textures/diabloNMtangent.png";
 
-	// Addresses
-	std::string lModelAddress 	= "./resources/models/diablo.obj";
-	std::string lTextureAddress	= "./resources/textures/diablo.png";
+	Transform lTransform {Math::vec3(),
+			      Math::mat3(Math::vec3(1.0f)),
+			      Math::Rotor(0.0f * M_PI, Math::vec3(0.0f, 1.0f, 0.0f))};
 
-	// Create entities
-	ecs::Entity lModelId 		= gManager.createEntity();
-	ecs::Entity lCameraId		= gManager.createEntity();
-	ecs::Entity lBuffersId		= gManager.createEntity();
-	ecs::Entity lLightId		= gManager.createEntity();
-	
-	// Buffers init
-	Buffers& lBuffers = gManager.addComponent<Buffers>(lBuffersId, {});
+	float FOV 		= M_PI / 2.0f;
+	float nearPlane 	= 2.0f;
+	float alpha 		= 1.4f;
+	float pixelWidth 	= 2000.0f;
 
-	// Model loading
-	Mesh& lMesh = gManager.addComponent<Mesh>(lModelId, {});	
-	IO::OBJ::read(lModelAddress, lModelId);
+	Camera lCamera {Math::vec3(0.0f, 0.0f, 2.5f),
+			Math::Rotor(0.0f*M_PI, Math::vec3(0.0f, 1.0f, 0.0f)),
+			2.0f * nearPlane * std::tan(FOV / 2.0f), alpha, nearPlane, pixelWidth};
 
-	// Model transform setting
-	Transform& lTransform = gManager.addComponent<Transform>(lModelId,
-								 {
-									Math::vec3(0.0f, 0.0f, 0.0f),
-									Math::mat3(Math::vec3(1.0f, 1.0f, 1.0f)),
-									Math::Rotor(0.0f*M_PI, Math::vec3(0.0f, 1.0f, 0.0f))
-								 });
-	
-	// Camera setting
-	float lNearPlane = 3.0f;
-	float lFov = M_PI / 3.0f;
-	float lAlpha = 1.3f;
+	Camera lLight {Math::vec3(10.0f, 10.0f, 10.0f),
+		       Math::Rotor(0.0f*M_PI, Math::vec3(0.0f, 1.0f, 0.0f)),
+		       2.0f * nearPlane * std::tan(FOV / 2.0f), alpha, nearPlane, pixelWidth};
+	lookAt(lLight, lTransform.mPosition);
 
-	Camera& lCamera = gManager.addComponent<Camera>(lCameraId,
-							{
-							Math::vec3(.0f, .0f, 4.0f),
-							Math::Rotor(0.0f, Math::vec3(0.0, 0.0f, 1.0f)),
-							(2.0f * lNearPlane * std::tan(lFov / 2.0f)),
-							lAlpha, lNearPlane, 2000.0f
-							});
-	lookAt(lCameraId, lTransform.mPosition);
+	Texture lTexture {};
+	PRINT_TERNARY(IO::PNG::read(lColorAddress, lTexture),
+		      "Color texture loaded!!",
+		      "Could not load color texture");
 
-	// Light setting
-	Camera& lLight = gManager.addComponent<Camera>(lLightId,
-							{
-							Math::vec3(10.0f, 10.0f, 10.0f),
-							Math::Rotor(0.0f, Math::vec3(0.0, 0.0f, 1.0f)),
-							(2.0f * lNearPlane * std::tan(lFov / 2.0f)),
-							lAlpha, lNearPlane, 2000.0f
-							});
-	lookAt(lLightId, lTransform.mPosition);
+	Texture lNormalTexture {};
+	PRINT_TERNARY(IO::PNG::read(lNormalAddress, lNormalTexture),
+		      "Normal map loaded!!",
+		      "Could not load normal map");
 
-	// Texture loading
-	Texture& lTexture = gManager.addComponent<Texture>(lModelId, {});
-	PRINT(IO::PNG::read(lTextureAddress, lModelId)? "Texture loaded!": "Cannot load texture!!");
+	//--------MESH
 
-	Uniform lUniform
-	{
-	       {lCamera.mPosition,
-		transpose(lCamera.mRotor.getMatrixForm()),
-		lCamera.mWidthS,
-		lCamera.mWidth,
-		lCamera.mAlpha,
-		lCamera.mNearPlane,
-		lTransform.mPosition,
-		lTransform.mRotor.getMatrixForm(),
-		lTransform.mShear},
-		lLight.mPosition,
-		transpose(lLight.mRotor.getMatrixForm())
-	};
-	
-	ISampler lSampler
-	{
-		&lTexture
+	std::string lModelAddress = "./resources/models/diablo.obj";
+
+	Mesh lMesh {};
+	PRINT_TERNARY(IO::OBJ::read(lModelAddress, lMesh),
+		      "Model loaded!!",
+		      "Could not load model!!");
+
+	//--------UNIFORM
+	IUniform lUniform
+	{	
+		lTransform.mPosition, lTransform.mRotor.getMatrixForm(), lTransform.mShear,
+		lCamera.mPosition, lCamera.mRotor.getMatrixForm(),
+		lLight.mPosition, lLight.mRotor.getMatrixForm(),
+		lCamera.mWidth, lCamera.mWidthS, lCamera.mAlpha, lCamera.mNearPlane
 	};
 
-	int lWidth = static_cast<int>(lUniform.mWidthS);
-	int lHeight = static_cast<int>(lUniform.mWidthS / lUniform.mAlpha);
+	NormalSampler lSampler
+	{
+		{&lTexture},
+		&lNormalTexture
+	};
+
+	//--------BUFFERS
 	
-	for (int i = 0; i < lWidth * lHeight; i++)
+	Buffers lBuffers {};
+
+	int lWidthS 	= static_cast<int>(lUniform.mWidthS);
+	int lHeightS 	= static_cast<int>(lUniform.mWidthS / lUniform.mAlpha);
+
+	for (int i = 0; i < lWidthS * lHeightS; i++)
 	{
 		lBuffers.mFrameBuffer.push_back(Math::vec3(40.0f));
 		lBuffers.mDepthBuffer.push_back(0.0f);
 	}
-	
-	// Rendering
-	Program program;
 
-	program.setUniform(&lUniform);
-	program.setSampler(&lSampler);
+	//-------RENDERING
+	Program program;		
+	program.setUniform<IUniform>(lUniform);
+	program.setSampler<NormalSampler>(lSampler);
+	program.setVarying();
 	program.render(lMesh, lBuffers);
 
+	//-------SAVING
+	std::string lSaveAddress = "./softwareRenderer.ppm";
 
-	// Saving
-	std::string lAddress = "softwareRenderer.ppm";
-	if(IO::PPM::write(lAddress, lBuffers.mFrameBuffer,
-	  	          static_cast<int>(lUniform.mWidthS),
-		          static_cast<int>(lUniform.mWidthS / lUniform.mAlpha)))
+	if(IO::PPM::write(lSaveAddress, lBuffers.mFrameBuffer, lWidthS, lHeightS))
 	{
-		PRINT(".ppm saved!!");
-	};
-
-	// Clean up
-	gManager.destroy();
-
+		PRINT("File saved!!");
+	}
 
 	return 0;
 };

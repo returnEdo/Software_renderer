@@ -1,86 +1,109 @@
 #pragma once
 
+#include <array>
+
 #include "vec2.hpp"
 #include "vec3.hpp"
 #include "mat3.hpp"
 #include "Components.hpp"
 
+#include "Unique.hpp"
+#include "Macros.hpp"
+
+
 namespace Renderer
 {
 
-using VertexInput = VertexOutput;
-
-// Uniforms are constant along the pipeline
 struct IUniform
 {
-	// Camera
-	Math::vec3	mCameraPosition;
-	Math::mat3	mCameraRotationT;
 
-	float 		mWidthS;
-	float 		mWidth;
-	float 		mAlpha;
-	float 		mNearPlane;
-
-	// Model
-	Math::vec3	mModelPosition;
-	Math::mat3 	mModelRotation;
+	Math::vec3 	mModelPosition;
+	Math::mat3	mModelRotation;
 	Math::mat3	mModelShear;
+	
+	Math::vec3	mCameraPosition;
+	Math::mat3	mCameraRotation;
+	
+	Math::vec3	mLightPosition;
+	Math::mat3	mLightRotation;
+
+	float		mWidth;
+	float		mWidthS;
+	float		mAlpha;
+	float		mNearPlane;
 };
 
 
-// Varying are interpolated
 struct IVarying
 {
-	Math::vec3 	mNormal;
-	Math::vec2 	mTextureUV;
+	Math::vec3	mNormal;
+	Math::vec2	mTextureUV;
+	float 		mDepth;
+};	
 
-	float		mDepth;
-};
 
-
-// Samplers are to be sampled :P
 struct ISampler
 {
-	Texture*	mColor; 
+	Texture*	mColor;
 };
 
-// 2D Triangle BBox
+
+struct IVertexOutput
+{
+	Math::vec3	mPosition;
+	Math::vec3 	mPositionW;
+	Math::vec3 	mNormal;
+	Math::vec2	mTextureUV;
+	float 		mFloat;
+};
+
+
+struct IVertexInput
+{
+	Math::vec3 	mPosition;
+	Math::vec3	mNormal;
+	Math::vec2	mTextureUV;
+};
+
 struct BBox
-{	
+{
 	Math::vec2	mSmallest;
 	Math::vec2	mBiggest;
 };
 
-
-// The program operates the vertex and fragment shader
-// rendering a scene
 class IProgram
 {
 	protected:
+	
+	Memory::Unique<IUniform>	mUniform;
+	Memory::Unique<IVarying>	mVarying;
+	Memory::Unique<ISampler>	mSampler;
 
-	IUniform*	mUniform;
-	IVarying*	mVarying;
-	ISampler*	mSampler;
+	std::array<IVertexOutput, 3>	mVertexOutput;
 
-	VertexOutput	mVertexOutput[3];
+	Math::vec3 			mFragmentPosition;		// World
+	Math::vec3			mBarycentric;
 
-	Math::vec3 	mFragmentPosition;
-	Math::vec3 	mBarycentric;
-
-	BBox getBoundingBox(void) const;
+	BBox updateBoundingBox(void);
 	void updateBarycentric(int i, int j);
-	/*IMPLEMENT*/ virtual void updateVarying(void) {} 
 	void updateFragmentPosition(int i, int j);
 
+	virtual void updateVarying(void) {}
+
 	public:
-
-	inline void setUniform(IUniform* tUniform)	{ mUniform = tUniform; }
-	inline void setSampler(ISampler* tSampler)	{ mSampler = tSampler; }
-
-	/*IMPLEMENT*/virtual void vertex(int i, const VertexInput& tVertexInput) {}
-	/*IMPLEMENT*/virtual Math::vec3 fragment(void) { return Math::vec3(); }
-	void render(const Mesh& tMesh, Buffers& tBuffers);
+	
+	template <typename UniformType>
+	void setUniform(UniformType tUniform) 	{ mUniform.copy<UniformType>(tUniform); }
+	template <typename SamplerType>
+	void setSampler(SamplerType tSampler)	{ mSampler.copy<SamplerType>(tSampler); }
+	void setVarying(void)			{ mVarying.allocate(); }
+	
+	virtual void vertexShader(int i, IVertexInput tVertexInput) {}
+	virtual Math::vec3 fragmentShader(void) { return Math::vec3(); }
+	
+	void render(Mesh& tMesh, Buffers& tBuffers);
 };
+
+
 
 }

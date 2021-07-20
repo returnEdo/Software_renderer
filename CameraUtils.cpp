@@ -3,18 +3,14 @@
 #include "Rotor.hpp"
 #include "mat3.hpp"
 #include "Components.hpp"
-#include "Manager.hpp"
 
-extern ecs::Manager gManager;
 
 namespace Renderer
 {
 
 
-void lookAt(ecs::Entity tCameraId, const Math::vec3& tFocus)
+void lookAt(Camera& tCamera, const Math::vec3& tFocus)
 {
-
-	Camera& lCamera = gManager.getComponent<Camera>(tCameraId);
 	
 	Math::vec3 lUp {0.0f, 1.0f, 0.0f};
 
@@ -22,7 +18,7 @@ void lookAt(ecs::Entity tCameraId, const Math::vec3& tFocus)
 	Math::vec3 lyCam;
 	Math::vec3 lzCam;
 
-	lzCam = lCamera.mPosition - tFocus;
+	lzCam = tCamera.mPosition - tFocus;
 	lzCam.normalize();
 
 	lxCam = lUp ^ lzCam;
@@ -32,7 +28,7 @@ void lookAt(ecs::Entity tCameraId, const Math::vec3& tFocus)
 
 	Math::mat3 lRotationMatrix = transpose(Math::mat3(lxCam, lyCam, lzCam));
 
-	lCamera.mRotor = Math::Rotor(lRotationMatrix);
+	tCamera.mRotor = Math::Rotor(lRotationMatrix);
 }
 
 

@@ -24,6 +24,19 @@ class Unique
 	T* get(void)		{ return mPointer; }
 	void set(T* tPointer)	{ mPointer = tPointer; }
 
+	template <typename U>
+	U& get(void)
+	{
+		return *(static_cast<U*>(mPointer));
+	}
+
+
+	template <typename U>
+	void copy(U tOther)
+	{
+		mPointer = static_cast<T*>(new U(tOther));
+	}
+
 
 	template <class ... Types>
 	void allocate(Types ... tArgs)
