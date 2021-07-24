@@ -71,6 +71,12 @@ struct BBox
 	Math::vec2	mBiggest;
 };
 
+struct Fragment
+{
+	Math::vec3	mColor;
+	float		mAlpha;
+};
+
 class IProgram
 {
 	protected:
@@ -99,7 +105,7 @@ class IProgram
 	void setVarying(void)			{ mVarying.allocate(); }
 	
 	virtual void vertexShader(int i, IVertexInput tVertexInput) {}
-	virtual Math::vec3 fragmentShader(void) { return Math::vec3(); }
+	virtual Fragment fragmentShader(void) { return {}; }
 	
 	void render(Mesh& tMesh, Buffers& tBuffers);
 };

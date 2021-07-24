@@ -30,6 +30,7 @@ namespace PNG
 namespace PPM
 {
 	bool write(const std::string& tAddress, const std::vector<Math::vec3>& tColors, int tWidth, int tHeight);
+	bool write(const std::string& tAddress, const Texture& tTexture); 
 }
 
 

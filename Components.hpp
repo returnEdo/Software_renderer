@@ -47,6 +47,7 @@ struct Buffers
 {
 	FrameBuffer	mFrameBuffer;
 	DepthBuffer	mDepthBuffer;
+	DepthBuffer	mAlphaBuffer;
 };
 
 

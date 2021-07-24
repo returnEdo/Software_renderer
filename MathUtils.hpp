@@ -34,6 +34,13 @@ float randf(float tA, float tB);
 
 float clamp(float tX, float tLower, float tUpper);
 
+template <typename T>
+T clamp(T tValue, T tLower, T tUpper)
+{
+	return std::max(std::min(tUpper, tValue), tLower);
+}
+
+
 Math::vec3 vLerp(const Math::vec3& tA, const Math::vec3& tB, float tAlpha);
 
 

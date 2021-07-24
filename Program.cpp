@@ -37,7 +37,7 @@ void Program::vertexShader(int i, IVertexInput tVertexInput)
 	mVertexOutput[i].mTextureUV = tVertexInput.mTextureUV;
 };
 
-Math::vec3 Program::fragmentShader(void)
+Fragment Program::fragmentShader(void)
 {
 	NormalSampler& lSampler = mSampler.get<NormalSampler>();
 
@@ -67,11 +67,11 @@ Math::vec3 Program::fragmentShader(void)
 	
 	Math::vec3 lNormal = M_ts_W * sampledNormal; 
 
-	float lDiffuse = std::max(L * mVarying->mNormal, 0.0f);	
+	float lDiffuse = std::max(L * lNormal, 0.0f);	
 
-	TextureSample lColorSample = sampleTexture(mVarying->mTextureUV, *lSampler.mNormal);
+	TextureSample lColorSample = sampleTexture(mVarying->mTextureUV, *lSampler.mColor);
 
-	return (lDiffuse * Math::vec3(250.0f));
+	return {(lDiffuse * lColorSample.mColor), 1.0f};
 };
 
 

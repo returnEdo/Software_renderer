@@ -160,6 +160,10 @@ namespace PPM
 		return true;
 	};
 
+	bool write(const std::string& tAddress, const Texture& tTexture)
+	{
+		return write(tAddress, tTexture.mColors, tTexture.mWidth, tTexture.mHeight);		
+	};
 
 }
 

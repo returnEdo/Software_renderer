@@ -8,13 +8,7 @@ namespace Renderer
 {
 
 
-struct NormalSampler: ISampler
-{
-	Texture*	mNormal;
-};
-
-
-class Program: public IProgram
+class GlowProgram: public IProgram
 {
 	private:
 

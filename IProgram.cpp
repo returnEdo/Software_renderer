@@ -71,8 +71,10 @@ void IProgram::render(Mesh& tMesh, Buffers& tBuffers)
 					if (mVarying->mDepth > tBuffers.mDepthBuffer[i + j * lWidthS])
 					{
 						updateFragmentPosition(i, j);
+						Fragment lFargment = fragmentShader();
 						tBuffers.mDepthBuffer[i + j * lWidthS] = mVarying->mDepth;
-						tBuffers.mFrameBuffer[i + j * lWidthS] = fragmentShader();
+						tBuffers.mFrameBuffer[i + j * lWidthS] = lFargment.mColor;
+						tBuffers.mAlphaBuffer[i + j * lWidthS] = lFargment.mAlpha;
 					}
 				}
 			}
