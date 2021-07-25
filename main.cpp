@@ -92,7 +92,7 @@ int main()
 		lTransform.mPosition, lTransform.mRotor.getMatrixForm(), lTransform.mShear,
 		lLight.mPosition, lLight.mRotor.getMatrixForm(),
 		lLight.mPosition, lLight.mRotor.getMatrixForm(),
-		lCamera.mWidth, lCamera.mWidthS, lCamera.mAlpha, lCamera.mNearPlane
+		lLight.mWidth, lLight.mWidthS, lLight.mAlpha, lLight.mNearPlane
 	};
 
 	ISampler lDepthSampler

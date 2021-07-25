@@ -14,7 +14,7 @@ void DepthProgram::updateVarying(void)
 	(mVarying->mNormal).normalize();
 };
 
-void DepthProgram::vertexShader(int i, IVertexInput tVertexInput)
+bool DepthProgram::vertexShader(int i, IVertexInput tVertexInput)
 {
 	mVertexOutput[i].mPositionW = (mUniform->mModelRotation * mUniform->mModelShear * tVertexInput.mPosition +
 				       mUniform->mModelPosition - mUniform->mCameraPosition); 
@@ -29,6 +29,8 @@ void DepthProgram::vertexShader(int i, IVertexInput tVertexInput)
 	mVertexOutput[i].mNormal.normalize();
 	
 	mVertexOutput[i].mTextureUV = tVertexInput.mTextureUV;
+
+	return (((mVertexOutput[i].mPositionW - mUniform->mCameraPosition) * mVertexOutput[i].mNormal) < 0.0f);
 };
 
 Fragment DepthProgram::fragmentShader(void)

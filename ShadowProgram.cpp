@@ -20,7 +20,7 @@ void ShadowProgram::updateVarying(void)
 	(mVarying->mNormal).normalize();
 };
 
-void ShadowProgram::vertexShader(int i, IVertexInput tVertexInput)
+bool ShadowProgram::vertexShader(int i, IVertexInput tVertexInput)
 {
 	mVertexOutput[i].mPositionW = (mUniform->mModelRotation * mUniform->mModelShear * tVertexInput.mPosition +
 				       mUniform->mModelPosition - mUniform->mCameraPosition); 
@@ -35,6 +35,8 @@ void ShadowProgram::vertexShader(int i, IVertexInput tVertexInput)
 	mVertexOutput[i].mNormal.normalize();
 	
 	mVertexOutput[i].mTextureUV = tVertexInput.mTextureUV;
+
+	return (((mVertexOutput[i].mPositionW - mUniform->mCameraPosition) * mVertexOutput[i].mNormal) < 0.0f);
 };
 
 Fragment ShadowProgram::fragmentShader(void)

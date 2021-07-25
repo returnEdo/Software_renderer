@@ -104,7 +104,7 @@ class IProgram
 	void setSampler(SamplerType tSampler)	{ mSampler.copy<SamplerType>(tSampler); }
 	void setVarying(void)			{ mVarying.allocate(); }
 	
-	virtual void vertexShader(int i, IVertexInput tVertexInput) {}
+	virtual bool vertexShader(int i, IVertexInput tVertexInput) { return true; }
 	virtual Fragment fragmentShader(void) { return {}; }
 	
 	void render(Mesh& tMesh, Buffers& tBuffers);

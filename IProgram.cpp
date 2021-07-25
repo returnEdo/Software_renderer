@@ -49,12 +49,15 @@ void IProgram::render(Mesh& tMesh, Buffers& tBuffers)
 	
 	for (const Face& lFace: tMesh.mFaces)
 	{
+		bool lRasterizeFace = false;
+
 		for (int i = 0; i < 3; i++)
 		{
-			vertexShader(i, {tMesh.mPositions[lFace.mIndices[i].mPosition],
-				      	 tMesh.mNormals[lFace.mIndices[i].mNormal],
-				      	 tMesh.mTextureUVs[lFace.mIndices[i].mTextureUV]});
+			lRasterizeFace |= vertexShader(i, {tMesh.mPositions[lFace.mIndices[i].mPosition],
+				     	   	           tMesh.mNormals[lFace.mIndices[i].mNormal],
+				      		           tMesh.mTextureUVs[lFace.mIndices[i].mTextureUV]});
 		}
+		if (not lRasterizeFace)	{ continue; }
 
 		BBox lBBox = updateBoundingBox();
 		

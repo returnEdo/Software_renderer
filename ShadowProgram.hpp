@@ -22,7 +22,7 @@ class ShadowProgram: public IProgram
 
 	public:
 	
-	virtual void vertexShader(int i, IVertexInput tVertexInput);
+	virtual bool vertexShader(int i, IVertexInput tVertexInput);
 	virtual Fragment fragmentShader(void);
 };
 
