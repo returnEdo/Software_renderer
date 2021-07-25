@@ -44,7 +44,7 @@ struct IVarying
 
 struct ISampler
 {
-	Texture*	mColor;
+	Buffer<Math::vec3>*	mColor;
 };
 
 
@@ -73,8 +73,8 @@ struct BBox
 
 struct Fragment
 {
-	Math::vec3	mColor;
-	float		mAlpha;
+	Math::vec3	mVec;
+	float		mFloat;
 };
 
 class IProgram
@@ -109,7 +109,6 @@ class IProgram
 	
 	void render(Mesh& tMesh, Buffers& tBuffers);
 };
-
 
 
 }

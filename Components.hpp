@@ -40,16 +40,6 @@ struct Camera
 	float	mWidthS;	// width in screen space
 };
 
-using FrameBuffer = std::vector<Math::vec3>;
-using DepthBuffer = std::vector<float>;
-
-struct Buffers
-{
-	FrameBuffer	mFrameBuffer;
-	DepthBuffer	mDepthBuffer;
-	DepthBuffer	mAlphaBuffer;
-};
-
 
 // Indices to vectors
 struct Indices
@@ -77,21 +67,29 @@ struct Mesh
 	std::vector<Face>	mFaces;
 };
 
-struct Texture
-{
-	std::vector<float>	mAlpha;
-	std::vector<Math::vec3>	mColors;
 
+template <typename Type>
+struct Buffer
+{	
+	std::vector<Type>	mData;
+	
 	int mWidth;
 	int mHeight;
 };
 
-
-struct TextureSample
-{	
-	float 		mAlpha;
-	Math::vec3	mColor;
+struct Buffers
+{
+	Buffer<Math::vec3>	mFrameBuffer;
+	Buffer<float>		mDepthBuffer;
+	Buffer<float>		mAlphaBuffer;
 };
+
+
+struct Texture
+{
+	Buffer<Math::vec3>	mVecBuffer;	
+	Buffer<float>		mFloatBuffer;
+};	
 
 
 }

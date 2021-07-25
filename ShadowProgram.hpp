@@ -8,13 +8,13 @@ namespace Renderer
 {
 
 
-struct NormalSampler: ISampler
+struct ShadowSampler: ISampler
 {
-	Buffer<Math::vec3>*	mNormal;
+	Buffer<float>*	mLightDepth;
 };
 
 
-class Program: public IProgram
+class ShadowProgram: public IProgram
 {
 	private:
 

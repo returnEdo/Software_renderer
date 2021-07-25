@@ -1,4 +1,4 @@
-#include "GlowProgram.hpp"
+#include "DepthProgram.hpp"
 
 #include "MathUtils.hpp"
 #include "TextureUtils.hpp"
@@ -6,17 +6,15 @@
 namespace Renderer
 {
 
-void GlowProgram::updateVarying(void)
+void DepthProgram::updateVarying(void)
 {
 	mVarying->mDepth 	= Math::interpolateBarycentric(mBarycentric, mVertexOutput[0].mPosition.z,
 									     mVertexOutput[1].mPosition.z,
 								 	     mVertexOutput[2].mPosition.z);
-	mVarying->mTextureUV 	= Math::interpolateBarycentric(mBarycentric, mVertexOutput[0].mTextureUV,
-								 	     mVertexOutput[1].mTextureUV,
-								 	     mVertexOutput[2].mTextureUV);
+	(mVarying->mNormal).normalize();
 };
 
-void GlowProgram::vertexShader(int i, IVertexInput tVertexInput)
+void DepthProgram::vertexShader(int i, IVertexInput tVertexInput)
 {
 	mVertexOutput[i].mPositionW = (mUniform->mModelRotation * mUniform->mModelShear * tVertexInput.mPosition +
 				       mUniform->mModelPosition - mUniform->mCameraPosition); 
@@ -27,18 +25,15 @@ void GlowProgram::vertexShader(int i, IVertexInput tVertexInput)
 					         mUniform->mWidthS / mUniform->mWidth * mUniform->mNearPlane * lPositionC.y / lPositionC.z + mUniform->mWidthS / (2.0f * mUniform->mAlpha),
 					         -1.0f / lPositionC.z);
 
+	mVertexOutput[i].mNormal = mUniform->mModelRotation * diagonalInv(mUniform->mModelShear) * tVertexInput.mNormal;
+	mVertexOutput[i].mNormal.normalize();
+	
 	mVertexOutput[i].mTextureUV = tVertexInput.mTextureUV;
 };
 
-Fragment GlowProgram::fragmentShader(void)
+Fragment DepthProgram::fragmentShader(void)
 {
-	TextureSample lColorSample = sampleTexture(mVarying->mTextureUV, *mSampler->mColor);
-
-	float lAlpha = (lColorSample.mColor.x + 
-			lColorSample.mColor.y + 
-			lColorSample.mColor.z) / (255.0f * 3.0f);
-
-	return {lColorSample.mColor, lAlpha};
+	return {Math::vec3(), 1.0f};
 };
 
 

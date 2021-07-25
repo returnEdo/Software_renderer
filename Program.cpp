@@ -60,18 +60,17 @@ Fragment Program::fragmentShader(void)
 	Math::mat3 M_ts_W = transpose(Math::mat3(grad_u, v_hat, mVarying->mNormal));
 	
 
-	TextureSample lNormalSample = sampleTexture(mVarying->mTextureUV, *lSampler.mNormal);
-	
-	Math::vec3 sampledNormal = lNormalSample.mColor - Math::vec3(255.0f / 2.0f);
+	Math::vec3 lNormalSample = sampleTexture<Math::vec3>(mVarying->mTextureUV, *lSampler.mNormal);
+	Math::vec3 sampledNormal = lNormalSample - Math::vec3(255.0f / 2.0f);
 	sampledNormal.normalize();
 	
 	Math::vec3 lNormal = M_ts_W * sampledNormal; 
 
 	float lDiffuse = std::max(L * lNormal, 0.0f);	
 
-	TextureSample lColorSample = sampleTexture(mVarying->mTextureUV, *lSampler.mColor);
+	Math::vec3 lColorSample = sampleTexture<Math::vec3>(mVarying->mTextureUV, *lSampler.mColor);
 
-	return {(lDiffuse * lColorSample.mColor), 1.0f};
+	return {(lDiffuse * lColorSample), 1.0f};
 };
 
 

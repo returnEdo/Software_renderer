@@ -8,7 +8,8 @@ namespace Renderer
 {
 
 
-class GlowProgram: public IProgram
+
+class DepthProgram: public IProgram
 {
 	private:
 

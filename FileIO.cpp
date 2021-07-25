@@ -101,22 +101,25 @@ namespace OBJ
 namespace PNG
 {
 
-	bool read(const std::string& tAddress, Texture& tTexture)
+	bool read(const std::string& tAddress, Buffer<Math::vec3>& tVecBuffer, Buffer<float>& tFloatBuffer)
 	{
 		int lChannelCount;
 
-		unsigned char* lData = stbi_load(tAddress.c_str(), &tTexture.mWidth, &tTexture.mHeight, &lChannelCount, 0);
+		unsigned char* lData = stbi_load(tAddress.c_str(), &tVecBuffer.mWidth, &tVecBuffer.mHeight, &lChannelCount, 0);
+
+		tFloatBuffer.mWidth = tVecBuffer.mWidth;
+		tFloatBuffer.mHeight = tVecBuffer.mHeight;
 
 		if (not lData)
 		{
 			return false;
 		}
 
-		for (int i = 0; i < tTexture.mHeight * tTexture.mWidth * lChannelCount; i += lChannelCount)
+		for (int i = 0; i < tVecBuffer.mHeight * tVecBuffer.mWidth * lChannelCount; i += lChannelCount)
 		{
-			tTexture.mAlpha.push_back(lChannelCount == 4? static_cast<float>(lData[i + 3]): 1.0f);
+			tFloatBuffer.mData.push_back(lChannelCount == 4? static_cast<float>(lData[i + 3]): 1.0f);
 
-			tTexture.mColors.push_back({static_cast<float>(lData[i]), 
+			tVecBuffer.mData.push_back({static_cast<float>(lData[i]), 
 						    static_cast<float>(lData[i + 1]), 
 						    static_cast<float>(lData[i + 2])});
 		}
@@ -160,11 +163,40 @@ namespace PPM
 		return true;
 	};
 
-	bool write(const std::string& tAddress, const Texture& tTexture)
+	bool write(const std::string& tAddress, const Buffer<Math::vec3>& tBuffer)
 	{
-		return write(tAddress, tTexture.mColors, tTexture.mWidth, tTexture.mHeight);		
+		return write(tAddress, tBuffer.mData, tBuffer.mWidth, tBuffer.mHeight);		
 	};
 
+
+	// This method is useful when i write texture based on the depth or alpha buffers.
+	// It requires almost always the values to be remapped, hence the functor.
+	bool write(const std::string& tAddress, const Buffer<float>& tBuffer, IFunctor* tFunctor)
+	{
+
+		std::ofstream lFile(tAddress);
+		
+		if (not lFile.is_open())
+		{
+			return false;
+		}
+
+		lFile << C_P_PPM 	<< std::endl;
+		lFile << tBuffer.mWidth << " " << tBuffer.mHeight << std::endl;
+		lFile << C_COLOR_COUNT 	<< std::endl;
+
+		for (auto lInput: tBuffer.mData)
+		{
+			float lOutput = tFunctor -> evaluate(lInput) * 255.0f;
+
+			lFile << static_cast<unsigned char>(lOutput) << 
+				 static_cast<unsigned char>(lOutput) <<
+				 static_cast<unsigned char>(lOutput);
+		}
+		lFile.close();
+
+		return true;
+	};
 }
 
 

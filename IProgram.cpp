@@ -68,13 +68,13 @@ void IProgram::render(Mesh& tMesh, Buffers& tBuffers)
 				if (Math::isInsideBarycentric(mBarycentric))
 				{
 					updateVarying();
-					if (mVarying->mDepth > tBuffers.mDepthBuffer[i + j * lWidthS])
+					if (mVarying->mDepth > tBuffers.mDepthBuffer.mData[i + j * lWidthS])
 					{
 						updateFragmentPosition(i, j);
-						Fragment lFargment = fragmentShader();
-						tBuffers.mDepthBuffer[i + j * lWidthS] = mVarying->mDepth;
-						tBuffers.mFrameBuffer[i + j * lWidthS] = lFargment.mColor;
-						tBuffers.mAlphaBuffer[i + j * lWidthS] = lFargment.mAlpha;
+						Fragment lFragment = fragmentShader();
+						tBuffers.mDepthBuffer.mData[i + j * lWidthS] = mVarying->mDepth;
+						tBuffers.mFrameBuffer.mData[i + j * lWidthS] = lFragment.mVec;
+					//	tBuffers.mAlphaBuffer.mData[i + j * lWidthS] = lFragment.mFloat;
 					}
 				}
 			}

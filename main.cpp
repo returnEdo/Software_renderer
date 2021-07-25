@@ -6,33 +6,36 @@
 #include "vec3.hpp"
 #include "mat3.hpp"
 #include "Rotor.hpp"
+#include "MathUtils.hpp"
 
 #include "Macros.hpp"
 #include "FileIO.hpp"
 #include "Components.hpp"
 #include "IProgram.hpp"
-#include "Program.hpp"
-#include "GlowProgram.hpp"
+#include "Programs.hpp"
 
 #include "CameraUtils.hpp"
 #include "TextureUtils.hpp"
+#include "Functor.hpp"
 
-#include "PostProcessing.hpp"
 
 
-std::vector<Math::vec3> blend(const std::vector<Math::vec3>& tBuffer1,
-			      const std::vector<Math::vec3>& tBuffer2,
-			      const std::vector<float>& tAlpha)
+class RemapDepth: public Renderer::IFunctor
 {
-	std::vector<Math::vec3> lBlended;
+	public:
 
-	for (int i = 0; i < tBuffer1.size(); i++)
-	{	
-		lBlended.push_back(tBuffer1[i] * (1.0f - tAlpha[i]) + tBuffer2[i] * tAlpha[i]);
+	float mAlpha 		= 2.0f;
+	float mMinimumDistance	= 0.0f;
+
+	virtual float evaluate(float tX) override
+	{
+	//	return (Math::near(tX, 0.0f, .00001f)? 0.0f: 1.0f);
+		//PRINT(std::pow(std::max(tX - mMinimumDistance, 0.0f) / (1.0f - mMinimumDistance + tX), 1.0f / mAlpha));
+		return std::pow(std::max(tX + 1.0f/mMinimumDistance, 0.0f) / (1.0f + 1.0f/mMinimumDistance + tX), 1.0f / mAlpha);
 	}
+};
 
-	return lBlended;
-}
+
 
 using namespace Renderer;
 
@@ -41,7 +44,6 @@ int main()
 	//--------SCENE
 	std::string lColorAddress = "./resources/textures/diablo.png";
 	std::string lNormalAddress = "./resources/textures/diabloNMtangent.png";
-	std::string lGlowAddress = "./resources/textures/diabloGlow.png";
 
 	Transform lTransform {Math::vec3(),
 			      Math::mat3(Math::vec3(1.0f)),
@@ -50,32 +52,26 @@ int main()
 	float FOV 		= M_PI / 2.0f;
 	float nearPlane 	= 2.0f;
 	float alpha 		= 1.4f;
-	float pixelWidth 	= 1000.0f;
+	float pixelWidth 	= 4000.0f;
 
 	Camera lCamera {Math::vec3(0.0f, 0.0f, 2.5f),
 			Math::Rotor(0.0f*M_PI, Math::vec3(0.0f, 1.0f, 0.0f)),
 			2.0f * nearPlane * std::tan(FOV / 2.0f), alpha, nearPlane, pixelWidth};
 
-	Camera lLight {Math::vec3(10.0f, 10.0f, 10.0f),
+	Camera lLight {Math::vec3(2.0f, 0.0f, 0.0f),
 		       Math::Rotor(0.0f*M_PI, Math::vec3(0.0f, 1.0f, 0.0f)),
 		       2.0f * nearPlane * std::tan(FOV / 2.0f), alpha, nearPlane, pixelWidth};
 	lookAt(lLight, lTransform.mPosition);
 
 	Texture lTexture {};
-	PRINT_TERNARY(IO::PNG::read(lColorAddress, lTexture),
+	PRINT_TERNARY(IO::PNG::read(lColorAddress, lTexture.mVecBuffer, lTexture.mFloatBuffer),
 		      "Color texture loaded!!",
 		      "Could not load color texture");
 
 	Texture lNormalTexture {};
-	PRINT_TERNARY(IO::PNG::read(lNormalAddress, lNormalTexture),
+	PRINT_TERNARY(IO::PNG::read(lNormalAddress, lNormalTexture.mVecBuffer, lTexture.mFloatBuffer),
 		      "Normal map loaded!!",
 		      "Could not load normal map");
-
-	Texture lGlowTexture {};
-	PRINT_TERNARY(IO::PNG::read(lGlowAddress, lGlowTexture),
-		      "Glow map loaded!!",
-		      "Could not load glow map");
-
 
 	//--------MESH
 
@@ -86,6 +82,47 @@ int main()
 		      "Model loaded!!",
 		      "Could not load model!!");
 
+	int lWidthS 	= static_cast<int>(lCamera.mWidthS);
+	int lHeightS 	= static_cast<int>(lCamera.mWidthS / lCamera.mAlpha);
+
+
+	//--------SHADOW TEXTURE
+	IUniform lDepthUniform
+	{	
+		lTransform.mPosition, lTransform.mRotor.getMatrixForm(), lTransform.mShear,
+		lLight.mPosition, lLight.mRotor.getMatrixForm(),
+		lLight.mPosition, lLight.mRotor.getMatrixForm(),
+		lCamera.mWidth, lCamera.mWidthS, lCamera.mAlpha, lCamera.mNearPlane
+	};
+
+	ISampler lDepthSampler
+	{
+		&lTexture.mVecBuffer
+	};
+
+	Buffers lDepthBuffers;
+	initBuffer<Math::vec3>(lDepthBuffers.mFrameBuffer, lWidthS, lHeightS, Math::vec3(40.0f));
+	initBuffer<float>(lDepthBuffers.mDepthBuffer, lWidthS, lHeightS, 0.0f);
+
+	DepthProgram depthProgram;
+	depthProgram.setUniform<IUniform>(lDepthUniform);
+	depthProgram.setSampler<ISampler>(lDepthSampler);
+	depthProgram.setVarying();
+	depthProgram.render(lMesh, lDepthBuffers);
+
+//	for (int i = 0; i < lDepthBuffers.mDepthBuffer.mData.size(); i++)
+//	{
+//		if (not Math::near(lDepthBuffers.mDepthBuffer.mData[i], 0.0f, 0.0001f))
+//		{
+//			PRINT(i);
+//		}
+//	}
+
+//	RemapDepth lRemapFunctor;
+//	lRemapFunctor.mAlpha = 3.0f;
+//	lRemapFunctor.mMinimumDistance = -19.0f;
+//	PRINT_TERNARY(IO::PPM::write("./depthRender.ppm", lDepthBuffers.mDepthBuffer, &lRemapFunctor), "Depth saved!!", "Depth not saved!!");
+
 	//--------UNIFORM
 	IUniform lUniform
 	{	
@@ -95,68 +132,32 @@ int main()
 		lCamera.mWidth, lCamera.mWidthS, lCamera.mAlpha, lCamera.mNearPlane
 	};
 
-	NormalSampler lSampler
+	ShadowSampler lSampler
 	{
-		{&lTexture},
-		&lNormalTexture
+		{&lTexture.mVecBuffer},		// texture
+		&lDepthBuffers.mDepthBuffer	// depth for light pov
 	};
+	
 
 	//--------BUFFERS
-	
 	Buffers lBuffers {};
-	Buffers lGlowBuffers {};
 
-	int lWidthS 	= static_cast<int>(lUniform.mWidthS);
-	int lHeightS 	= static_cast<int>(lUniform.mWidthS / lUniform.mAlpha);
-
-	for (int i = 0; i < lWidthS * lHeightS; i++)
-	{
-		lBuffers.mFrameBuffer.push_back(Math::vec3(40.0f));
-		lBuffers.mDepthBuffer.push_back(0.0f);
-		lBuffers.mAlphaBuffer.push_back(1.0f);
-		lGlowBuffers.mFrameBuffer.push_back(Math::vec3(0.0f));
-		lGlowBuffers.mDepthBuffer.push_back(0.0f);
-		lGlowBuffers.mAlphaBuffer.push_back(0.0f);
-	}
+	initBuffer<Math::vec3>(lBuffers.mFrameBuffer, lWidthS, lHeightS, Math::vec3(40.0f));
+	initBuffer<float>(lBuffers.mDepthBuffer, lWidthS, lHeightS, 0.0f);
 
 	//-------RENDERING
-	Program program;		
+	ShadowProgram program;		
 	program.setUniform<IUniform>(lUniform);
-	program.setSampler<NormalSampler>(lSampler);
+	program.setSampler<ShadowSampler>(lSampler);
 	program.setVarying();
 	program.render(lMesh, lBuffers);
-
-	ISampler lSamplerGlow
-	{
-		&lGlowTexture
-	};
-
-	GlowProgram glowProgram;		
-	glowProgram.setUniform<IUniform>(lUniform);
-	glowProgram.setSampler<ISampler>(lSamplerGlow);
-	glowProgram.setVarying();
-	glowProgram.render(lMesh, lGlowBuffers);
-
-	Texture lInputGlow
-	{
-		lGlowBuffers.mAlphaBuffer, lGlowBuffers.mFrameBuffer, 
-		lWidthS, lHeightS
-	};
-	Texture lOutputGlow;
-	filterGaussian(3.0f, lInputGlow, lOutputGlow);
-
-
-	FrameBuffer lBlended = blend(lBuffers.mFrameBuffer, lGlowBuffers.mFrameBuffer, lGlowBuffers.mAlphaBuffer);
 
 	//-------SAVING
 	std::string lSaveAddress = "./softwareRenderer.ppm";
 
-	if(IO::PPM::write(lSaveAddress, lGlowBuffers.mFrameBuffer, lWidthS, lHeightS))
-	{
-		PRINT("File saved!!");
-	}
+	PRINT_TERNARY(IO::PPM::write(lSaveAddress, lBuffers.mFrameBuffer), "Render saved!!", "Render not saved!!");
 
-	IO::PPM::write("./glowBlurred.ppm", lBlended, lWidthS, lHeightS);
+
 
 	return 0;
 };
