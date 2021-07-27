@@ -59,6 +59,13 @@ Math::vec3 vLerp(const Math::vec3& tA, const Math::vec3& tB, float tAlpha)
 	return (1.0f - tAlpha) * tA + tAlpha * tB;
 }
 
+Math::vec3 randNormal(void)
+{
+	Math::vec3 tTemp{randf(-1.0f, 1.0f), randf(-1.0f, 1.0f), randf(-1.0f, 1.0f)};
+	
+	return normalize(tTemp);
+};
+
 Math::vec3 findBarycentric(const Math::vec3& x, const Math::vec3& u,
 			   const Math::vec3& v, const Math::vec3& w)
 {
@@ -85,6 +92,12 @@ Math::vec3 findBarycentric(const Math::vec3& x, const Math::vec3& u,
 bool isInsideBarycentric(const Math::vec3& tB)
 {
 	return (tB.x >= .0f and tB.y >= .0f and tB.z >= .0f);
+}
+
+
+Math::vec3 reflect(const Math::vec3& tReflect, const Math::vec3& tAxis)
+{
+	return (2.0f * (tReflect * tAxis) * tAxis - tReflect);
 }
 
 };

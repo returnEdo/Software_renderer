@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include "vec2.hpp"
 #include "vec3.hpp"
@@ -14,8 +15,8 @@ namespace Renderer
 template <typename T>
 T sampleTexture(const Math::vec2& tTextureCoordinates, Buffer<T>& tBuffer)
 {
-	int xt = static_cast<int>(tBuffer.mWidth * tTextureCoordinates.x);
-	int yt = static_cast<int>(tBuffer.mHeight * (1.0f - tTextureCoordinates.y));
+	int xt = static_cast<int>(std::round(tBuffer.mWidth * tTextureCoordinates.x));
+	int yt = static_cast<int>(std::round(tBuffer.mHeight * (1.0f - tTextureCoordinates.y)));
 
 	int lSize = tBuffer.mWidth * tBuffer.mHeight - 1;
 

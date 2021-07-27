@@ -2,3 +2,4 @@
 #include "Program.hpp"
 #include "DepthProgram.hpp"
 #include "ShadowProgram.hpp"
+#include "FullProgram.hpp"

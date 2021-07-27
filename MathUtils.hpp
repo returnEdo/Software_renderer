@@ -29,7 +29,6 @@ bool near(float tValue, float tReference, float tTollerance);
 
 Math::mat3 cross(const Math::vec3& tV);
 
-
 float randf(float tA, float tB);
 
 float clamp(float tX, float tLower, float tUpper);
@@ -42,6 +41,7 @@ T clamp(T tValue, T tLower, T tUpper)
 
 
 Math::vec3 vLerp(const Math::vec3& tA, const Math::vec3& tB, float tAlpha);
+Math::vec3 randNormal(void);
 
 
 // Barycentric coordinates
@@ -57,5 +57,10 @@ T interpolateBarycentric(const Math::vec3& tBarycentric, T u, T v, T w)
 {
 	return (tBarycentric.x * u + tBarycentric.y * v + tBarycentric.z * w);
 }
+
+Math::vec3 reflect(const Math::vec3& tReflect, const Math::vec3& tAxis);
+
+
+
 
 };
